@@ -1,0 +1,63 @@
+---
+- name: Installing LAMP Stack
+  hosts: all
+  tasks:
+    - name: updating cache
+      apt:
+        update_cache: yes
+        state: present
+      become: yes
+      when: ansible_facts['distribution'] == "Ubuntu" 
+    - name: Installing apache
+      package:
+        name: "{{ apache_package }}"
+        state: present
+      become: yes
+    - name: starting & enabling httpd
+      systemd:
+        name: httpd.service
+        state: started
+        enabled: yes
+      become: yes
+      when: ansible_facts['distribution'] == "CentOS"
+    - name: Installing php
+      package:
+        name: "{{ item }}"
+        state: present
+      become: yes
+      loop: "{{ php }}"
+    - name: Restarting httpd
+      systemd:
+        name: httpd.service
+        state: restarted
+      become: yes
+      when: ansible_facts['distribution'] == "CentOS"
+    - name: Changing html/ permissions to USERS
+      file:
+        path: /var/www/html/
+        recurse: yes
+        owner: "{{ user_name }}"
+        group: "{{ group_name }}"
+        state: directory
+      become: yes
+    - name: Creating dir.conf file
+      copy:
+        src: dir.conf
+        dest: /etc/apache2/mods-enabled/dir.conf
+        owner: "{{ user_name }}"
+        group: "{{ group_name }}"
+      become: yes
+      when: ansible_facts['distribution'] == "Ubuntu" 
+    - name: Reloading apache2
+      systemd:
+        name: apache2
+        state: reloaded
+      become: yes
+      when: ansible_facts['distribution'] == "Ubuntu"
+    - name: Creating info.php file
+      copy:
+        src: info.php
+        dest: /var/www/html/info.php
+        owner: "{{ user_name }}"
+        group: "{{ group_name }}"
+      become: yes

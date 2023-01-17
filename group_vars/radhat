@@ -1,0 +1,6 @@
+apache_package: httpd.
+php:
+  - php 
+  - php-mysqlnd
+user_name: ansible
+group_name: ansible
