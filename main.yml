@@ -40,6 +40,10 @@
         group: "{{ group_name }}"
         state: directory
       become: yes
+    - name: Checking state of dir.conf
+      stat:
+        path: /etc/apache2/mods-enabled/dir.conf
+      register: dir_file
     - name: Creating dir.conf file
       copy:
         src: dir.conf
@@ -47,13 +51,11 @@
         owner: "{{ user_name }}"
         group: "{{ group_name }}"
       become: yes
-      when: ansible_facts['distribution'] == "Ubuntu" 
-    - name: Reloading apache2
-      systemd:
-        name: apache2
-        state: reloaded
-      become: yes
-      when: ansible_facts['distribution'] == "Ubuntu"
+      when: 
+        - ansible_facts['distribution'] == "Ubuntu"
+        - not dir_file.stat.exists
+      notify:
+        - Reloading apache2
     - name: Creating info.php file
       copy:
         src: info.php
@@ -61,3 +63,10 @@
         owner: "{{ user_name }}"
         group: "{{ group_name }}"
       become: yes
+  handlers:
+    - name: Reloading apache2
+      systemd:
+        name: apache2
+        state: reloaded
+      become: yes
+      when: ansible_facts['distribution'] == "Ubuntu"
