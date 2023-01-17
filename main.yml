@@ -26,12 +26,8 @@
         state: present
       become: yes
       loop: "{{ php }}"
-    - name: Restarting httpd
-      systemd:
-        name: httpd.service
-        state: restarted
-      become: yes
-      when: ansible_facts['distribution'] == "CentOS"
+      notify: 
+        - Restarting httpd
     - name: Changing html/ permissions to USERS
       file:
         path: /var/www/html/
@@ -70,3 +66,9 @@
         state: reloaded
       become: yes
       when: ansible_facts['distribution'] == "Ubuntu"
+    - name: Restarting httpd
+      systemd:
+        name: httpd.service
+        state: restarted
+      become: yes
+      when: ansible_facts['distribution'] == "CentOS"
